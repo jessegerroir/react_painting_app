@@ -2,9 +2,11 @@ import React, { Component } from 'react';
 import logo from './logo.svg';
 import './App.css';
 
+
+const colours = ["#990000", "#000099", "#004C00", "#e59400"];
+
 function getRandomColour(){
     //list of colours that the tiles can be
-    const colours = ["#990000", "#000099", "#004C00", "#e59400"];
     return colours[Math.floor((Math.random() * 4))];
 }
 
@@ -19,17 +21,30 @@ class App extends Component {
 }
 
 //this is a board component. It has no changing state. It simply organizes the board for display.
-const Board = ({boardWidth, boardHeight, tiles}) => {
+const Board = ({boardWidth, boardHeight, selectedColour}) => {
     const pStyle = {
         width: boardHeight + "px",
         height: boardHeight + "px"
     };
+
+    let tiles = [];
+    for (let x = 0; x < (boardWidth /50) * (boardHeight /50); x++) {
+        tiles.push(<Tile selectedColour={selectedColour}></Tile>);
+    }
+
+
     return(
         <div className='board' style={pStyle}>
             {tiles}
         </div>
     )
-}
+};
+
+const Swatch = (props) => {
+    return(
+      <div className='swatch' style={{'background-color': props.colour}} onClick={props.onSwatchClick}></div>
+    )
+};
 
 //this is a tile class. We need it to be a class as it has a changing state.
 class Tile extends Component{
@@ -44,14 +59,13 @@ class Tile extends Component{
         this.onTileClick.bind(this);
     }
 
-    onTileClick(){
-        const { colour } = this.state;
-        this.setState({colour: getRandomColour()});
+    onTileClick(selectedColour){
+        this.setState({colour: selectedColour});
     }
 
     render(){
         return(
-            <div className="tile" style={{'background-color': this.state.colour}}  onClick={() => this.onTileClick()}></div>
+            <div className="tile" style={{'background-color': this.state.colour}}  onClick={() => this.onTileClick(this.props.selectedColour)}></div>
         );
     }
 }
@@ -59,26 +73,37 @@ class Tile extends Component{
 class Game extends Component{
     constructor(props){
         super(props);
-        const size = (800 /50);
-        //calculate the board size and number of tiles to cover it on the fly
-        let tiles = [];
-        for (let x = 0; x < size; x++) {
-            let tempArray = [];
-            for (let y = 0; y < size; y++) {
-                tempArray.push(<Tile colour={getRandomColour()}></Tile>);
-            }
-            tiles.push(tempArray);
+
+        //init the swatches
+        let swatches = [];
+        for (let i = 0; i < colours.length; i++) {
+            swatches.push({colour: colours[i]});
         }
 
         this.state = {
-            tiles: tiles,
+            swatches,
+            selectedColour: colours[0],
         };
+
+        //bind the handler so it can access this
+        this.selectColour = this.selectColour.bind(this);
+
+    }
+
+    selectColour(colour){
+        this.setState({ selectedColour: colour });
     }
 
     render(){
+        const { swatches, selectedColour} = this.state;
         return(
-            <div className="Game">
-                <Board boardWidth='800' boardHeight='800' tiles={this.state.tiles}></Board>
+            <div className="game">
+                <div className="toolbar">
+                    {swatches.map(swatch =>
+                        <Swatch colour={swatch.colour} onSwatchClick={() => this.selectColour(swatch.colour)}></Swatch>
+                    )}
+                </div>
+                <Board boardWidth='800' boardHeight='800' selectedColour={selectedColour}></Board>
             </div>
         );
     }
